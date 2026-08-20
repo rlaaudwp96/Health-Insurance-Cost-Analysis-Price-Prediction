@@ -57,3 +57,59 @@ lm_final <- lm(
 )
 
 summary(lm_final)
+```
+
+### 2. Evaluating Prediction Intervals (Risk Assessment)
+```R
+# Estimating cost increase for a 27yo non-smoker vs. smoker
+new_person <- data.frame(
+  age = 27, bmi = 28, children = 0,
+  sex = factor("male", levels = levels(insurance$sex)),
+  smoker = factor("no", levels = levels(insurance$smoker)),
+  region = factor("southwest", levels = levels(insurance$region))
+)
+
+# Non-smoker baseline vs Smoker cost calculation
+pred_non_smoker <- exp(predict(lm_final, newdata = new_person))
+smoker_person <- new_person; smoker_person$smoker <- "yes"
+pred_smoker <- exp(predict(lm_final, newdata = smoker_person))
+```
+
+---
+
+## 👥 Contributors
+This project was conducted as part of our statistical modeling coursework:
+
+* **Myungje Kim**
+* **Nicholas Fisher**
+* **Felix Arroyo Viglino**
+
+---
+
+## 📁 Project Structure
+```text
+├── insurance.csv            # Raw healthcare cost dataset
+├── Final Project.qmd        # Quarto / R Markdown script containing EDA and model selection
+└── README.md                # Project documentation
+```
+
+---
+
+## 🚀 How to Reproduce
+1. **Clone this repository:**
+   ```bash
+   git clone https://github.com/rlaaudwp96/Medical-Insurance-Cost-Prediction.git
+   cd Medical-Insurance-Cost-Prediction
+   ```
+2. **Open Project:** Open `Final Project.qmd` in **RStudio**.
+3. **Install Packages:** Run the following command in the R console:
+   ```R
+   install.packages(c("tidyverse", "car", "MASS", "MuMIn", "caret", "pacman"))
+   ```
+4. **Run Analysis:** Render the Quarto document or run the script blocks sequentially to reproduce all visualizations, diagnostic plots, and regression tables.
+
+---
+
+## 🛠️ Tech Stack
+* **Language:** R
+* **Libraries:** `tidyverse` (`ggplot2`, `dplyr`), `car`, `MASS`, `caret`, `MuMIn`
