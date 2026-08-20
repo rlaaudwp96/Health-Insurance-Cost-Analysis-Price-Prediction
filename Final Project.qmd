@@ -1,0 +1,455 @@
+---
+title: "633_Final_Project"
+author: "Myungje Kim (zb2482)"
+format:
+  html:
+    self-contained: true
+editor: visual
+execute:
+  echo: true
+  message: false
+  warning: false
+---
+
+```{r}
+library(MASS)
+library(tidyverse)
+library(car)
+library(MuMIn)
+```
+
+```{r}
+ins <- read.csv("insurance.csv")
+
+#lm_test <- lm(log(charges) ~ region, data = ins_raw)
+#summary(lm_test)
+
+#ins <- ins_raw |>
+#  mutate(region = case_when(
+#    region %in% c("northeast", "southeast") ~ "East",
+#    region %in% c("northwest", "southwest") ~ "West",
+#    TRUE ~ "Other"
+#  )) |>
+#  dplyr::select(age, sex, bmi, children, smoker, charges, region)
+
+#table(ins$region)
+```
+
+```{r}
+
+summary(ins)
+ins <- na.omit(ins)
+
+unique_data <- ins %>% distinct()
+# Returns rows that are duplicates of a previous row
+ins[duplicated(ins), ]
+
+
+ins <- ins |>
+  mutate(across(c(sex, smoker, region), as.factor))
+head(ins)
+str(ins)
+```
+
+```{r}
+pairs(charges ~ age + factor(sex) + bmi + children + factor(smoker) + factor(region), data = ins)
+
+cor(dplyr::select(ins, age, bmi, children, charges))
+pairs(charges ~ age + bmi + children, data = ins)
+pairs(log(charges) ~ I(age^2) + I(bmi^2), data = ins)
+```
+
+```{r}
+ggplot(ins, aes(x = smoker, y = log(charges), fill = smoker)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(legend.position = 'none') +
+  labs(title = "Log(Charges) by Smoker", x = "Smoker", y = "Log(Charges)")
+ggplot(ins, aes(x = sex, y = log(charges), fill = sex)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(legend.position = 'none') +
+  labs(title = "Log(Charges) by Sex", x = "Sex", y = "Log(Charges)")
+ggplot(ins, aes(x = region, y = log(charges), fill = region)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(legend.position = 'none') +
+  labs(title = "Log(Charges) by Region", x = "Region", y = "Log(Charges)")
+```
+
+```{r}
+lm_full2 <- lm(charges ~ age + sex + bmi + children + smoker + region, data = ins)
+vif(lm_full2)
+```
+
+```{r}
+lm_final <- lm(log(charges) ~ age + age^2 + sex + bmi + I(bmi^2) + children + smoker + region + age:sex + age:children + age:smoker + age:region + sex:smoker + bmi:smoker + children:smoker + smoker:region, data = ins)
+
+par(mfrow = c(2:2))
+```
+
+\
+
+```{r}
+lm_final <- lm(log(charges) = age + age^2 + sex + bmi + I(bmi^2) + children +  smoker + region + age:sex + age:children + age:smoker + age:region +  sex:smoker + bmi:smoker + children:smoker + smoker:region)
+
+#models
+lm_full <- lm(log(charges) ~ age + sex + bmi + children + smoker + region, data = ins)
+
+
+
+vif(lm_full)
+
+lm1 <- step(lm(log(charges) ~ age + bmi + smoker + bmi:smoker + children + sex + region, data = ins))
+
+lm2 <- lm(log(charges) ~ age + I(age^2) + sex + bmi + I(bmi^2) + children + 
+            smoker + region + age:sex + age:children + age:smoker + age:region + 
+            sex:smoker + bmi:smoker + children:smoker + smoker:region, data = ins)
+
+lm3 <- lm(log(charges) ~ age + I(age^2) + sex + bmi + children + 
+            smoker + region + age:sex + age:children + age:smoker + age:region + 
+            sex:smoker + bmi:region + bmi:smoker + children:smoker + 
+            smoker:region, data = ins)
+
+lm4 <- lm(log(charges) ~ age + I(age^2) + sex + bmi + I(bmi^2) + children +
+            smoker + region + age:sex + age:bmi + age:children + age:smoker + age:region + sex:bmi + sex:children + sex:smoker + sex:region + bmi:children + bmi:region + bmi:smoker + children:region + children:smoker +smoker:region, data = ins) #Nicholas' model
+
+lm5 <- lm(log(charges) ~ I(age^2) + factor(sex) + I(bmi^2) + children + factor(smoker) + factor(region), data = ins)
+
+lm6 <- lm(log(charges) ~ I(age^2) + factor(sex) + I(bmi^2) + children + factor(smoker) + factor(region) + age:factor(sex) + age:bmi + age:children + age:factor(smoker) + factor(region) + factor(sex):bmi + factor(sex):children + factor(sex):factor(smoker) + factor(sex):factor(region) + bmi:children + bmi:factor(smoker) + bmi:factor(region) + children:factor(smoker) + children:factor(region) + factor(smoker):factor(region) , data = ins)
+
+lm7 <- lm(log(charges) ~ I(age^2) +  (sex) + I(bmi^2) +  (children) +  (smoker) +  (region) + age: (sex) + age:bmi + age: (children) + age: (smoker) +  (region) +  (sex):bmi +  (sex): (children) +  (sex): (smoker) +  (sex): (region) + bmi: (children) + bmi: (smoker) + bmi: (region) +  (children): (smoker) +  (children): (region) +  (smoker): (region) , data = ins)
+#factor doesn't matter
+
+summary(lm_full)
+plot(lm_full)
+summary(lm1)
+plot(lm1)
+summary(lm2)
+plot(lm2)
+summary(lm2)
+plot(lm2)
+summary(lm3)
+plot(lm3)
+summary(lm4)
+plot(lm4)
+summary(lm5)
+plot(lm5)
+summary(lm6)
+plot(lm6)
+
+plot(lm_full, which=1:2)
+shapiro.test(resid(lm_full))
+             
+plot(lm1, which=1:2)
+shapiro.test(resid(lm1))
+plot(lm2, which=1:2)
+shapiro.test(resid(lm2))
+plot(lm3, which=1:2)
+shapiro.test(resid(lm3))
+plot(lm4, which=1:2, fill = 'col')
+shapiro.test(resid(lm4))
+plot(lm5, which=1:2)
+shapiro.test(resid(lm5))
+plot(lm6, which=1:2)
+shapiro.test(resid(lm6))             
+             
+             
+AIC(lm_full, lm1, lm2, lm3, lm4, lm5, lm6, lm7)
+vif(lm_full)
+vif(lm1)
+vif(lm2)
+vif(lm3)
+vif(lm4)
+vif(lm5)
+vif(lm6)
+vif(lm7)
+```
+
+```{r}
+best_model_lm_full <- step(lm_full, direction = "backward")
+summary(best_model_lm_full)
+best_model_lm1 <- step(lm1, direction = "backward")
+summary(best_model_lm1)
+best_model_lm2 <- step(lm2, direction = "backward")
+summary(best_model_lm2)
+best_model_lm3 <- step(lm3, direction = "backward")
+summary(best_model_lm3)
+best_model_lm4 <- step(lm4, direction = "backward")
+summary(best_model_lm4)
+best_model_lm5 <- step(lm5, direction = "backward")
+summary(best_model_lm5)
+best_model_lm6 <- step(lm6, direction = "backward")
+summary(best_model_lm6)
+```
+
+```{r}
+pacman::p_load(caret)
+
+set.seed(999)
+n <- nrow(ins)
+train_idx <- sample(1:n, floor(0.7 * n))
+train_data <- ins[train_idx, ]
+test_data <- ins[-train_idx, ]
+
+get_rmse <- function(model, test_df) {
+  preds <- predict(model, newdata = test_df)
+    is_log <- grepl("log", as.character(formula(model))[2])
+  
+  if (is_log) {
+    preds <- exp(preds)
+    actual <- test_df$charges
+  } else {
+    actual <- test_df$charges
+  }
+  
+  return(sqrt(mean((actual - preds)^2)))
+}
+
+rmse_lm_full <- get_rmse(lm_full, test_data)
+rmse_lm1     <- get_rmse(lm1, test_data)
+rmse_lm2     <- get_rmse(lm2, test_data)
+rmse_lm3     <- get_rmse(lm3, test_data)
+rmse_lm4     <- get_rmse(lm4, test_data)
+rmse_lm5     <- get_rmse(lm5, test_data)
+rmse_lm6 <- get_rmse(lm6, test_data)
+
+results <- data.frame(
+  Model = c("Full", "LM1", "LM2", "LM3", "LM4", "LM5", "LM6"),
+  RMSE = c(rmse_lm_full, rmse_lm1, rmse_lm2, rmse_lm3, rmse_lm4, rmse_lm5, rmse_lm6)
+)
+print(results)
+
+lm_test <- lm(log(charges) ~ age + I(age^2) + sex + bmi + I(bmi^2) + children +  smoker + region + age:sex + age:children + age:smoker + age:region +  sex:smoker + bmi:smoker + children:smoker + smoker:region, data = ins)
+
+summary(lm_test)
+```
+
+\
+
+```{r}
+anova_lm_full <- anova(lm_full)
+print(anova_lm_full)
+
+anova_lm1 <- anova(lm1)
+print(anova_lm1)
+
+anova_lm2 <- anova(lm2)
+print(anova_lm2)
+
+anova_lm3 <- anova(lm3)
+print(anova_lm3)
+
+anova_lm4 <- anova(lm4)
+print(anova_lm4)
+
+anova_lm5 <- anova(lm5)
+print(anova_lm5)
+
+anova_lm6 <- anova(lm6)
+print(anova_lm6)
+
+anova(lm_full, lm1)
+anova(lm_full, lm2)
+anova(lm_full, lm3)
+anova(lm_full, lm4)
+anova(lm_full, lm5)
+anova(lm_full, lm6)
+```
+
+```{r}
+coef(summary(lm4))
+```
+
+```{r}
+library(dplyr)
+
+# 데이터 요약 및 하한/상한값 계산
+region_representative <- ins %>%
+  group_by(region) %>%
+  summarise(
+    age = mean(age),
+    bmi = mean(bmi),
+    children = mean(children),
+    sex = "male",       # 임의 설정
+    smoker = "no"       # 임의 설정
+  )
+
+# 2. 모델을 사용하여 예측 구간(Prediction Interval) 계산
+preds <- predict(lm2, newdata = region_representative, interval = "prediction", level = 0.95)
+
+# 3. 기존 요약 테이블과 결합
+final_table <- ins %>%
+  group_by(region) %>%
+  summarise(
+    Insurance_Charge = mean(charges),
+    sd_val = sd(charges),
+    n = n()
+  ) %>%
+  mutate(
+    # 로그 모델 사용 시 exp()로 복원
+    Lower_Limit = exp(preds[, "lwr"]),
+    Upper_Limit = exp(preds[, "upr"])
+  ) %>%
+  select(region, Insurance_Charge, Lower_Limit, Upper_Limit)
+
+print(final_table)
+```
+
+```{r}
+log(charges) ~ age + I(age^2) + sex + bmi + I(bmi^2) + children +  smoker + region_group + age:sex + age:children + age:smoker + age:region_group +  sex:smoker + bmi:smoker + children:smoker + smoker:region_group 
+```
+
+#Nic's paper
+```{r}
+#| echo: false
+
+library(ggplot2)
+library(car)
+library(MASS)
+library(Metrics)
+
+url1 <- "https://raw.githubusercontent.com/stedy/Machine-Learning-with-R-datasets/master/insurance.csv"
+
+insurance <- read.csv(url1)
+
+```{r}
+#| echo: false
+pairs(charges ~ age + bmi + children, data = insurance)
+```
+insurance$sex <- as.factor(insurance$sex)
+insurance$smoker <- as.factor(insurance$smoker)
+insurance$region <- as.factor(insurance$region)
+```
+
+```{r}
+#| echo: false
+par(mfrow = c(2, 2))
+plot(model1)
+par(mfrow = c(1, 1))
+shapiro.test(residuals(model1))
+```
+```{r}
+#| echo: false
+par(mfrow = c(1, 3))
+
+boxplot(log(charges) ~ smoker,
+        data = insurance,
+        main = "log(Charges) by Smoker",
+        xlab = "Smoker",
+        ylab = "log(Charges)")
+
+boxplot(log(charges) ~ sex,
+        data = insurance,
+        main = "log(Charges) by Sex",
+        xlab = "Sex",
+        ylab = "log(Charges)")
+
+boxplot(log(charges) ~ region,
+        data = insurance,
+        main = "log(Charges) by Region",
+        xlab = "Region",
+        ylab = "log(Charges)")
+
+```
+
+```{r}
+#| echo: false
+ggplot(insurance, aes(x = age, y = charges, color = smoker)) +
+  geom_point() +
+  labs(
+    title = "Charges by Age and Smoker",
+    x = "Age",
+    y = "Charges",
+    color = "Smoker"
+  )
+ggplot(insurance, aes(x = bmi, y = charges, color = smoker)) +
+  geom_point() +
+  labs(
+    title = "Charges by BMI and Smoker",
+    x = "BMI",
+    y = "Charges",
+    color = "Smoker"
+  )
+```
+
+```{r}
+#| echo: false
+boxcox(lm(charges ~ age + bmi + children + sex + smoker + region,
+          data = insurance))
+
+```
+```{r}
+#| echo: false
+model1 <- lm(log(charges) ~ age + I(age^2) + sex + bmi + I(bmi^2) +
+               children + smoker + region +
+               age:sex + age:children + age:smoker + age:region +
+               sex:smoker + bmi:smoker + children:smoker + smoker:region,
+             data = insurance)
+
+model2 <- lm(log(charges) ~ age + bmi + smoker + bmi:smoker +
+               children + sex + region,
+             data = insurance)
+```
+
+```{r}
+#| echo: false
+vif_model <- lm(charges ~ age + bmi + children + sex + smoker + region,
+                data = insurance)
+
+vif(vif_model)
+```
+
+
+```{r}
+#| echo: false
+new_person <- data.frame(
+  age = 27,
+  bmi = 28,
+  children = 0,
+  sex = factor("male", levels = levels(insurance$sex)),
+  smoker = factor("no", levels = levels(insurance$smoker)),
+  region = factor("southwest", levels = levels(insurance$region))
+)
+
+pred_non_smoker <- predict(model1,
+                           newdata = new_person,
+                           interval = "prediction")
+
+exp(pred_non_smoker)
+
+smoker_person <- data.frame(
+  age = 27,
+  bmi = 28,
+  children = 0,
+  sex = factor("male", levels = levels(insurance$sex)),
+  smoker = factor("yes", levels = levels(insurance$smoker)),
+  region = factor("southwest", levels = levels(insurance$region))
+)
+
+pred_smoker <- predict(model1,
+                       newdata = smoker_person,
+                       interval = "prediction")
+
+exp(pred_smoker)
+```
+
+```{r}
+#| echo: false
+AIC(model1, model2)
+
+summary(model1)$adj.r.squared
+summary(model2)$adj.r.squared
+
+rmse(model1$fitted.values, log(insurance$charges))
+rmse(model2$fitted.values, log(insurance$charges))
+```
+
+
+```{r}
+#| echo: false
+par(mfrow = c(2, 2))
+plot(model1)
+par(mfrow = c(1, 1))
+shapiro.test(residuals(model1))
+```
