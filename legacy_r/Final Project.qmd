@@ -1,0 +1,94 @@
+---
+title: "Myungje_Kim_Final_Project"
+author: "Myungje Kim"
+format: pdf
+editor: visual
+execute:
+  echo: true
+  message: false
+  warning: false
+---
+
+```{r}
+#| label: setup
+library(MASS)
+library(tidyverse)
+library(car)
+library(Metrics)
+
+# Load data
+ins <- read.csv("insurance.csv")
+ins <- na.omit(ins)
+ins <- ins |> mutate(across(c(sex, smoker, region), as.factor))
+```
+
+1. Exploratory Data Analysis
+
+```{r}
+#| label: eda
+# Visualizing log-transformed relationships
+ggplot(ins, aes(x = smoker, y = log(charges), fill = smoker)) + geom_boxplot() + theme_minimal()
+ggplot(ins, aes(x = age, y = charges, color = smoker)) + geom_point() + theme_minimal()
+
+# Box-Cox to justify log-transformation
+boxcox(lm(charges ~ age + bmi + children + sex + smoker + region, data = ins))
+```
+
+2. Model Development
+```{r}
+#| label: model-fitting
+
+# Candidates
+lm_full <- lm(log(charges) ~ age + sex + bmi + children + smoker + region, data = ins)
+
+lm2 <- lm(log(charges) ~ age + I(age^2) + sex + bmi + I(bmi^2) + children + 
+            smoker + region + age:sex + age:children + age:smoker + age:region + 
+            sex:smoker + bmi:smoker + children:smoker + smoker:region, data = ins)
+
+# Model selection using AIC
+aic_results <- AIC(lm_full, lm2)
+print(aic_results)
+```
+
+3. Model Diagnostics & Validation
+```{r}
+#| label: diagnostics
+# Diagnostics for the best model (lm2)
+par(mfrow = c(2, 2))
+plot(lm2)
+par(mfrow = c(1, 1))
+
+# Normality test
+shapiro.test(residuals(lm2))
+
+# Cross-Validation
+set.seed(999)
+train_idx <- sample(1:nrow(ins), floor(0.7 * nrow(ins)))
+train_data <- ins[train_idx, ]
+test_data <- ins[-train_idx, ]
+
+fit_train <- lm(formula(lm2), data = train_data)
+preds <- exp(predict(fit_train, newdata = test_data))
+rmse_val <- sqrt(mean((test_data$charges - preds)^2))
+cat("Test RMSE:", rmse_val)
+```
+
+4. Final Prediction Table
+```{r}
+#| label: prediction
+region_rep <- ins %>%
+  group_by(region) %>%
+  summarise(age = mean(age), bmi = mean(bmi), children = mean(children), 
+            sex = "male", smoker = "no")
+
+preds_ci <- predict(lm2, newdata = region_rep, interval = "prediction", level = 0.95)
+
+final_table <- ins %>%
+  group_by(region) %>%
+  summarise(Insurance_Charge = mean(charges), n = n()) %>%
+  mutate(Lower_Limit = exp(preds_ci[, "lwr"]),
+         Upper_Limit = exp(preds_ci[, "upr"]))
+
+print(final_table)
+```
+
