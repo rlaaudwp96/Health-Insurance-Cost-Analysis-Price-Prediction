@@ -57,10 +57,6 @@ python health_insurance_analysis.py
 
 The workflow removes duplicate rows, log-transforms charges, creates nonlinear numeric features, one-hot encodes categorical variables, fits a regression model, and reports RMSE, R2, adjusted R2, and an example prediction.
 
-## Original R Materials
-
-The original coursework materials are preserved in `legacy_r/` for reference; the primary implementation in this repository is Python.
-
 ---
 
 ## 👥 Contributors
@@ -77,7 +73,6 @@ This project was conducted as part of our statistical modeling coursework:
 ├── insurance.csv            # Raw healthcare cost dataset
 ├── health_insurance_analysis.py # Reproducible Python analysis
 ├── requirements.txt         # Python dependencies
-├── legacy_r/                # Original R coursework materials
 └── README.md                # Project documentation
 ```
 
