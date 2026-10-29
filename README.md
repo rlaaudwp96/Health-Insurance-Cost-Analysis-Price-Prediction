@@ -1,85 +1,98 @@
-# Health Insurance Cost Analysis and Price Prediction
+# Health Insurance Cost Prediction
 
-Python implementation of an interpretable insurance-cost modeling workflow using pandas and scikit-learn.
+### Explain which factors drive medical costs with interpretable Python regression
 
-## Business Problem & Overview
-Medical insurance providers face significant challenges in accurately pricing policy risk. Miscalculating healthcare costs can lead to underpriced premiums (resulting in financial losses) or overpriced plans (losing customers to competitors). 
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![scikit-learn](https://img.shields.io/badge/Modeling-scikit--learn-F7931E)](https://scikit-learn.org/)
+[![Regression](https://img.shields.io/badge/Method-regression-6C5CE7)](https://en.wikipedia.org/wiki/Regression_analysis)
 
-This project analyzes individual healthcare charges using the US Insurance dataset (1,338 policyholders) to identify key cost drivers—such as age, BMI, and smoking habits—and builds an interpretable predictive regression model to estimate individual medical charges.
+This project models medical insurance charges for 1,338 policyholders and explains how age, BMI, smoking status, and their interactions relate to predicted cost. The workflow is designed for an analyst who needs a model that is interpretable enough to discuss with business or policy stakeholders.
 
----
+## Contents
 
-## Key Results & Business Impact
-* **Best Model:** Log-transformed Multiple Linear Regression with non-linear terms ($Age^2$, $BMI^2$) and key interaction terms ($BMI \times Smoker$, $Age \times Smoker$).
-* **Model Performance:** The Python implementation achieved a **validation R2 of 0.836** and a **training adjusted R2 of 0.833** with nonlinear terms and interactions.
-* **Core Takeaways:**
-  * **Smoker Impact:** Smoking is the single largest driver of high insurance charges. For a 27-year-old male with a BMI of 28, becoming a smoker increases predicted charges from **$2,757** to **$22,148**—a nearly **8x increase**.
-  * **Interaction Effects:** BMI has a compounding effect on medical costs *specifically for smokers*—non-smokers show a much flatter cost curve as BMI increases compared to smokers.
+- [Business question](#business-question)
+- [Key result](#key-result)
+- [Quick start](#quick-start)
+- [Modeling workflow](#modeling-workflow)
+- [Example interpretation](#example-interpretation)
+- [Project structure](#project-structure)
+- [Limitations and known issues](#limitations-and-known-issues)
+- [Contribution](#contribution)
+- [Support](#support)
+- [License](#license)
 
----
+## Business question
 
-## Data & Feature Preprocessing
-* **Dataset:** 1,338 insurance records containing demographic and lifestyle attributes (`age`, `sex`, `bmi`, `children`, `smoker`, `region`, and `charges`).
-* **Transformations & Cleaning:**
-  1. Handled missing values and verified unique data rows.
-  2. Applied a **Log Transformation** (`log(charges)`) to handle extreme right-skewness in medical costs and normalize error residuals.
-  3. Formatted categorical features (`sex`, `smoker`, `region`) as factor variables.
-  4. Added quadratic terms ($Age^2$, $BMI^2$) to capture non-linear relationships.
+How can an insurance-cost model capture skewed charges and nonlinear risk relationships without becoming impossible to explain? This project compares a baseline regression with log-transformed, nonlinear, and interaction-based specifications.
 
----
+## Key result
 
-## Methodology & Model Comparison
+The extended model improved adjusted R² from approximately **0.782 to 0.838** by adding log transformation, quadratic terms, and interactions. In validation, the Python workflow achieved an R² of approximately **0.836**.
 
-Multiple regression specifications were evaluated using **AIC**, **Adjusted $R^2$**, and **70/30 Train/Test RMSE** via cross-validation:
+The strongest business signal is smoking status. For the example profile used in the analysis, predicted charges increase from about **$2,757** to **$22,148** when smoking status changes, illustrating why interaction effects matter.
 
-1. **Baseline Model (`lm_full`):** Standard linear regression across all 6 features.
-2. **Stepwise Model (`lm1`):** Stepwise selection evaluating core main effects and $BMI \times Smoker$.
-3. **Final Complex Model (`lm2` / `Model 1`):** Complex model incorporating non-linear age/BMI trends alongside critical interaction pairs ($Age \times Smoker$, $BMI \times Smoker$, $Sex \times Smoker$).
+## Quick start
 
-### Performance Evaluation
+### Prerequisites
 
-| Model | Log Transformed | Adj. $R^2$ | Key Features / Interaction Terms |
-| :--- | :---: | :---: | :--- |
-| **Baseline Linear** | ❌ No | ~0.747 | Basic linear terms without interactions |
-| **Stepwise (`lm1`)** | ✅ Yes | ~0.782 | `age`, `bmi`, `smoker`, `bmi:smoker`, `children`, `sex`, `region` |
-| **Final Model (`lm2`)** | ✅ Yes | **~0.838** | $Age^2$, $BMI^2$, $BMI \times Smoker$, $Age \times Smoker$, $Sex \times Smoker$ |
+- Python 3.10 or newer
+- Git
 
----
-
-## Python Workflow
-
-Run the reproducible analysis with:
-
-```bash
+```powershell
+git clone https://github.com/rlaaudwp96/Health-Insurance-Cost-Analysis-Price-Prediction.git
+cd Health-Insurance-Cost-Analysis-Price-Prediction
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python health_insurance_analysis.py
 ```
 
-The workflow removes duplicate rows, log-transforms charges, creates nonlinear numeric features, one-hot encodes categorical variables, fits a regression model, and reports RMSE, R2, adjusted R2, and an example prediction.
+The script prints model metrics and an example prediction using the included dataset.
 
----
+## Modeling workflow
 
-## 👥 Contributors
-This project was conducted as part of our statistical modeling coursework:
-
-* **Myungje Kim**
-* **Nicholas Fisher**
-* **Felix Arroyo Viglino**
-
----
-
-## 📁 Project Structure
-```text
-├── insurance.csv            # Raw healthcare cost dataset
-├── health_insurance_analysis.py # Reproducible Python analysis
-├── requirements.txt         # Python dependencies
-└── README.md                # Project documentation
+```mermaid
+flowchart LR
+    A[1,338 insurance records] --> B[Clean duplicates and categories]
+    B --> C[Log-transform charges]
+    C --> D[Create nonlinear terms]
+    D --> E[Add smoking interactions]
+    E --> F[Fit regression model]
+    F --> G[Compare RMSE, R2, adjusted R2]
+    G --> H[Explain cost drivers]
 ```
 
----
+The Python implementation uses pandas, NumPy, and scikit-learn for cleaning, feature engineering, one-hot encoding, regression, and evaluation.
 
----
+## Example interpretation
 
-## 🛠️ Tech Stack
-* **Language:** Python
-* **Libraries:** `pandas`, `numpy`, `scikit-learn`
+Smoking status is not treated as an isolated checkbox. The model also examines how smoking interacts with age, BMI, and sex, allowing the cost curve to change across different customer profiles.
+
+## Project structure
+
+```text
+Health-Insurance-Cost-Analysis-Price-Prediction/
+├── health_insurance_analysis.py  # Reproducible Python workflow
+├── insurance.csv                  # Insurance dataset
+├── requirements.txt               # NumPy, pandas, scikit-learn
+└── README.md
+```
+
+## Limitations and known issues
+
+- The dataset is a benchmark dataset, not a production insurance portfolio.
+- Association in the data should not be interpreted as causal evidence.
+- Predictions are sensitive to the feature distribution and should be validated on current data before use.
+- The example dollar values are model outputs, not pricing recommendations.
+
+## Contribution
+
+Open an issue with a reproducible example, keep feature engineering and model changes in `health_insurance_analysis.py`, and report metric changes with the same evaluation setup.
+
+## Support
+
+Use GitHub Issues or connect with [Myungje Kim on LinkedIn](https://www.linkedin.com/in/evan-kim-257857249/).
+
+## License
+
+No open-source license has been specified yet. Contact the repository owner before redistributing or adapting the code.
